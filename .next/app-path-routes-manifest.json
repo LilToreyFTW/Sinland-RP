@@ -1,0 +1,8 @@
+{
+  "/api/auth/discord/login/route": "/api/auth/discord/login",
+  "/api/auth/logout/route": "/api/auth/logout",
+  "/api/auth/discord/callback/route": "/api/auth/discord/callback",
+  "/api/checkout/route": "/api/checkout",
+  "/_not-found/page": "/_not-found",
+  "/page": "/"
+}
