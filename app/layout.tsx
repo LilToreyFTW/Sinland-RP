@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SinLand-RP | Custom QBCore Roleplay",
-  description: "Discord-whitelisted SinLand-RP website, community hub, and tier storefront."
+  title: "Sinland-RP | Server Hub",
+  description: "Sinland-RP website with live server stack, vehicle catalog, Discord-gated storefront, and community forums."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

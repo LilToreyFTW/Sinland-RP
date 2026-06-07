@@ -1,122 +1,115 @@
 import Link from "next/link";
 import { CheckoutButton } from "@/components/CheckoutButton";
+import { SiteChrome } from "@/components/SiteChrome";
 import { getSession } from "@/lib/session";
+import { getServerSnapshot } from "@/lib/server-data";
 import { tiers } from "@/lib/tiers";
 
 export default async function HomePage() {
   const session = await getSession();
   const isAllowed = Boolean(session?.isWhitelisted);
-  const discordInvite = process.env.NEXT_PUBLIC_DISCORD_INVITE || "https://discord.gg/2uRphk42HU";
+  const snapshot = getServerSnapshot();
+  const highlightCategories = snapshot.categories.slice(0, 6);
 
   return (
-    <main className="page-shell">
-      <header className="topbar">
-        <div>
-          <div className="brand-title">SinLand-RP</div>
-          <div className="brand-sub">Custom QBCore Roleplay</div>
-        </div>
-        <div className="topbar-actions">
-          {session ? (
-            <>
-              <span className="button secondary">{session.username}</span>
-              <Link href="/api/auth/logout" className="button secondary">
-                Logout
-              </Link>
-            </>
-          ) : (
-            <Link href="/api/auth/discord/login" className="button">
-              Login with Discord
+    <SiteChrome session={session}>
+      <section className="hero-panel">
+        <div className="hero-copy">
+          <span className="section-kicker">Live Server Overview</span>
+          <h2>Sinland-RP now reflects the real server stack.</h2>
+          <p>
+            This site is now anchored to the actual QBCore deployment, Sinland custom packs, mapped interiors,
+            vehicle libraries, Discord systems, and protected server tools running behind the city.
+          </p>
+          <div className="hero-actions">
+            <Link href="/garage" className="button">
+              Browse Vehicles
             </Link>
-          )}
-        </div>
-      </header>
-
-      <section className="hero">
-        <span className="eyebrow">Grit. Chaos. Loyalty. Survival.</span>
-        <div className="hero-grid">
-          <div>
-            <h1>Make Your Name In SinLand</h1>
-            <p>
-              Welcome to SinLand-RP, a city built around chaos, ambition, loyalty, temptation,
-              and survival. This is a gritty, story-driven world where every player has the chance
-              to build a reputation, chase money, run businesses, rise through crime, create drama,
-              or become a name the whole city remembers.
-            </p>
-            <div className="hero-actions">
-              <Link href={discordInvite} className="button">
-                Join The Discord
-              </Link>
-              <a href="#tiers" className="button secondary">
-                View Tier Packages
-              </a>
-            </div>
+            <Link href="/forums" className="button secondary">
+              Open Forums
+            </Link>
           </div>
-          <aside className="hero-side">
-            <h2>What SinLand-RP Offers</h2>
-            <ul className="hero-list">
-              <li>Custom QBCore experience</li>
-              <li>Immersive roleplay atmosphere</li>
-              <li>Unique vehicles and custom content</li>
-              <li>Crime, business, reputation, and lifestyle RP</li>
-              <li>Adult, dramatic, and unpredictable storytelling</li>
-              <li>A city where player choices shape the world</li>
-            </ul>
-          </aside>
+        </div>
+
+        <div className="hero-grid-stats">
+          <div className="mini-card">
+            <span className="metric-label">Tracked Resources</span>
+            <strong>{snapshot.totalResources}</strong>
+          </div>
+          <div className="mini-card">
+            <span className="metric-label">Vehicle Entries</span>
+            <strong>{snapshot.vehicles.length}</strong>
+          </div>
+          <div className="mini-card">
+            <span className="metric-label">Protected Systems</span>
+            <strong>{snapshot.featuredSystems.length}</strong>
+          </div>
         </div>
       </section>
 
-      <section className="content-grid">
-        <article className="section-card">
-          <h2>Built To Be A Real Home</h2>
-          <p>
-            This is not just another FiveM city with jobs and cars. The streets are dangerous, the
-            nightlife is loud, and every choice matters. Whether you come for a fresh start, power,
-            respect, fast cars, or something darker, the city gives you room to create your own story.
-          </p>
-        </article>
-        <article className="section-card">
-          <h2>Community First</h2>
-          <p>
-            SinLand-RP is being built into a real community where players stay, bring friends, help
-            shape the server from the ground up, and turn the city into their main home.
-            Developer: <strong>sinland_dev</strong>.
-          </p>
-        </article>
+      <section className="section-band">
+        <div className="section-heading">
+          <span className="section-kicker">Server Modules</span>
+          <h2>Everything important is surfaced here.</h2>
+          <p>From base framework content to Sinland custom packs, the website now mirrors the actual server layout.</p>
+        </div>
+        <div className="resource-grid">
+          {highlightCategories.map((category) => (
+            <article className="resource-card" key={category.slug}>
+              <div className="resource-top">
+                <h3>{category.title}</h3>
+                <span className="pill">{category.resourceCount} folders</span>
+              </div>
+              <p>{category.description}</p>
+              <div className="chip-row">
+                {category.resources.slice(0, 4).map((resource) => (
+                  <span className="tiny-chip" key={resource.name}>
+                    {resource.name}
+                  </span>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
       </section>
 
-      <section className="gate-wrapper">
+      <section className="section-band">
+        <div className="section-heading">
+          <span className="section-kicker">Security Stack</span>
+          <h2>Copyright guard and encryption are now represented on-site.</h2>
+          <p>
+            The site now calls out the Sinland copyright lock and the encryption integrity layer so the protected
+            server stack is visible as part of the brand, not hidden implementation detail.
+          </p>
+        </div>
+        <div className="resource-grid two-up">
+          <article className="resource-card accent-card">
+            <h3>sinland-copyright</h3>
+            <p>Machine-lock enforcement, startup guard rails, self-integrity checks, and protected resource shutdown.</p>
+          </article>
+          <article className="resource-card accent-card">
+            <h3>sinland-encrytion</h3>
+            <p>Integrity manifests, signed baselines, encrypted backups, audit hooks, and resource tamper monitoring.</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="section-band">
+        <div className="section-heading">
+          <span className="section-kicker">Storefront</span>
+          <h2>Tier packages stay live behind the whitelist gate.</h2>
+          <p>Store access still respects the Discord role check already built into the site.</p>
+        </div>
         <div className="gate-card">
-          <h2>Discord Whitelist Gate</h2>
-          <p>
-            Only users with the Discord whitelist role can access the full website and purchase pages.
-            Login with Discord and the site will verify your role through the SinLand bot before unlocking the store.
-          </p>
-          {session ? (
-            <p>
-              Status: <strong>{isAllowed ? "Whitelisted" : "Not Whitelisted"}</strong>
-            </p>
-          ) : (
-            <p>Status: <strong>Not logged in</strong></p>
-          )}
-          {!isAllowed && (
-            <div className="hero-actions">
-              <Link href="/api/auth/discord/login" className="button">
-                Verify With Discord
-              </Link>
-              <Link href={discordInvite} className="button secondary">
-                Need The Whitelist Role?
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section id="tiers">
-        <div className="tiers-header">
-          <h2>SinLand Tier Packages</h2>
-          <p className="tier-desc">
-            Ten storefront tiers are ready. Checkout is locked behind Discord whitelist verification.
-          </p>
+          <div>
+            <h3>Discord access status</h3>
+            <p>{session ? (isAllowed ? "Whitelisted and unlocked." : "Logged in, but not whitelisted yet.") : "Not logged in yet."}</p>
+          </div>
+          {!isAllowed ? (
+            <Link href="/api/auth/discord/login" className="button secondary">
+              Verify with Discord
+            </Link>
+          ) : null}
         </div>
         <div className="tiers-grid">
           {tiers.map((tier) => (
@@ -137,22 +130,11 @@ export default async function HomePage() {
                 ))}
               </ul>
               {tier.restrictions ? <div className="restriction">{tier.restrictions}</div> : null}
-              {isAllowed ? (
-                <CheckoutButton tierSlug={tier.slug} />
-              ) : (
-                <Link href="/api/auth/discord/login" className="button secondary">
-                  Login To Unlock
-                </Link>
-              )}
+              {isAllowed ? <CheckoutButton tierSlug={tier.slug} /> : <Link href="/api/auth/discord/login" className="button secondary">Login To Unlock</Link>}
             </article>
           ))}
         </div>
       </section>
-
-      <p className="footer-note">
-        In SinLand, people become legends, enemies, lovers, outlaws, business owners, gang leaders,
-        and ghosts. Are you ready to make your name?
-      </p>
-    </main>
+    </SiteChrome>
   );
 }
