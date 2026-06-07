@@ -29,9 +29,9 @@ export function SiteChrome({
           {session ? (
             <>
               <span className="button secondary static-chip">{session.username}</span>
-              <Link href="/api/auth/logout" className="button secondary">
+              <a href="/api/auth/logout" className="button secondary">
                 Logout
-              </Link>
+              </a>
             </>
           ) : (
             <Link href="/api/auth/discord/login" className="button secondary">

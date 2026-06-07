@@ -26,6 +26,7 @@ export function VerificationGate({
     try {
       const response = await fetch("/api/verification", {
         method: "POST",
+        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json"
         },
