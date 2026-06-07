@@ -11,8 +11,8 @@ export default async function HomePage() {
   const activeSession = session
     ? {
         ...session,
-        ...liveRoles,
-        guildMemberFound: liveRoles?.guildMemberFound ?? session.guildMemberFound
+        ...(liveRoles?.success ? liveRoles : {}),
+        guildMemberFound: liveRoles?.success ? liveRoles.guildMemberFound ?? session.guildMemberFound : session.guildMemberFound
       }
     : null;
   const isAllowed = Boolean(activeSession?.isWhitelisted);

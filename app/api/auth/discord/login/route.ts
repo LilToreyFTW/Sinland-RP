@@ -24,7 +24,7 @@ export async function GET() {
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("redirect_uri", redirectUri);
-  url.searchParams.set("scope", "identify guilds");
+  url.searchParams.set("scope", "identify guilds guilds.members.read");
   url.searchParams.set("state", state);
   url.searchParams.set("prompt", "consent");
 

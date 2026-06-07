@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { exchangeDiscordCode, fetchDiscordGuilds, fetchDiscordUser, getDiscordAvatarUrl } from "@/lib/discord";
+import { exchangeDiscordCode, fetchDiscordGuildMember, fetchDiscordGuilds, fetchDiscordUser, getDiscordAvatarUrl } from "@/lib/discord";
 import { setSession } from "@/lib/session";
 import { fetchWhitelistStatus } from "@/lib/whitelist";
+import { buildSnapshotFromRoles } from "@/lib/sinland-roles";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
@@ -20,7 +21,20 @@ export async function GET(request: NextRequest) {
     const discordGuilds = await fetchDiscordGuilds(tokenData.access_token);
     const guildId = process.env.DISCORD_GUILD_ID;
     const isInGuild = guildId ? discordGuilds.some((guild) => guild.id === guildId) : true;
-    const whitelist = await fetchWhitelistStatus(discordUser.id);
+    const oauthMember =
+      guildId && isInGuild
+        ? await fetchDiscordGuildMember(tokenData.access_token, guildId).catch(() => null)
+        : null;
+    const oauthSnapshot =
+      guildId && oauthMember
+        ? buildSnapshotFromRoles({
+            discordId: discordUser.id,
+            guildId,
+            roles: oauthMember.roles || [],
+            guildMemberFound: true
+          })
+        : null;
+    const whitelist = oauthSnapshot || (await fetchWhitelistStatus(discordUser.id));
 
     await setSession({
       discordId: discordUser.id,
