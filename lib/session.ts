@@ -17,6 +17,18 @@ export type SessionUser = {
   roles?: string[];
   roleLabels?: string[];
   guildMemberFound?: boolean;
+  steam?: string | null;
+  steamIdentifier?: string | null;
+  steamProfileUrl?: string | null;
+  steamVerifiedAt?: string | null;
+  verificationRequired?: boolean;
+  banned?: boolean;
+  ban?: {
+    label?: string;
+    reason?: string;
+    source?: string;
+    matchedBy?: string;
+  } | null;
 };
 
 const COOKIE_NAME = "sinland_session";

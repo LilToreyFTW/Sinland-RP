@@ -170,6 +170,22 @@ textarea {
   margin-top: 14px;
 }
 
+.verification-panel {
+  border-radius: 20px;
+  padding: 24px;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow);
+}
+
+.verification-form {
+  margin-top: 20px;
+}
+
+.banned-panel {
+  border-color: rgba(255, 107, 107, 0.45);
+}
+
 .hero-panel,
 .section-band {
   margin-top: 20px;

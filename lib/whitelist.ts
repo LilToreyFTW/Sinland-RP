@@ -14,6 +14,18 @@ export type WhitelistSnapshot = {
   roles?: string[];
   roleLabels?: string[];
   guildMemberFound?: boolean;
+  steam?: string | null;
+  steamIdentifier?: string | null;
+  steamProfileUrl?: string | null;
+  steamVerifiedAt?: string | null;
+  verificationRequired?: boolean;
+  banned?: boolean;
+  ban?: {
+    label?: string;
+    reason?: string;
+    source?: string;
+    matchedBy?: string;
+  } | null;
   error?: string;
 };
 
@@ -51,4 +63,25 @@ export async function fetchWhitelistStatus(discordId: string) {
   }
 
   return response.json() as Promise<WhitelistSnapshot>;
+}
+
+export async function submitSteamVerification(discordId: string, steamInput: string) {
+  const botApiUrl = process.env.BOT_API_URL;
+  const botApiKey = process.env.BOT_API_KEY;
+
+  if (!botApiUrl || !botApiKey) {
+    throw new Error("BOT_API_URL or BOT_API_KEY is missing.");
+  }
+
+  const response = await fetch(`${botApiUrl}/api/website/verification/${discordId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-sinland-api-key": botApiKey
+    },
+    body: JSON.stringify({ steamInput }),
+    cache: "no-store"
+  });
+
+  return response;
 }

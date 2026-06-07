@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckoutButton } from "@/components/CheckoutButton";
 import { SiteChrome } from "@/components/SiteChrome";
+import { VerificationGate } from "@/components/VerificationGate";
 import { getSession } from "@/lib/session";
 import { getServerSnapshot } from "@/lib/server-data";
 import { tiers } from "@/lib/tiers";
@@ -16,6 +17,8 @@ export default async function HomePage() {
       }
     : null;
   const isAllowed = Boolean(activeSession?.isWhitelisted);
+  const needsVerification = Boolean(activeSession?.guildMemberFound && activeSession?.verificationRequired);
+  const isBanned = Boolean(activeSession?.banned);
   const snapshot = getServerSnapshot();
   const highlightCategories = snapshot.categories.slice(0, 6);
   const roleSummary = [
@@ -31,6 +34,29 @@ export default async function HomePage() {
 
   return (
     <SiteChrome session={activeSession}>
+      {activeSession?.discordId && activeSession.guildMemberFound && (needsVerification || isBanned) ? (
+        <section className="section-band">
+          {isBanned ? (
+            <section className="verification-panel banned-panel">
+              <div className="section-heading">
+                <span className="section-kicker">Access Blocked</span>
+                <h2>This account is banned from Sinland-RP.</h2>
+                <p>
+                  Your Discord account or linked Steam/FiveM hex matched the protected ban records already loaded from
+                  Sinland enforcement.
+                </p>
+              </div>
+              <div className="resource-card">
+                <h3>{activeSession.ban?.label || "Protected Ban"}</h3>
+                <p>{activeSession.ban?.reason || "Protected Sinland ban."}</p>
+              </div>
+            </section>
+          ) : (
+            <VerificationGate discordId={activeSession.discordId} steamIdentifier={activeSession.steamIdentifier} />
+          )}
+        </section>
+      ) : null}
+
       <section className="hero-panel">
         <div className="hero-copy">
           <span className="section-kicker">Live Server Overview</span>
@@ -124,8 +150,12 @@ export default async function HomePage() {
             <p>
               {!activeSession
                 ? "Not logged in yet."
-                : isAllowed
-                  ? "Whitelisted and unlocked."
+                : isBanned
+                  ? "Access blocked by protected ban enforcement."
+                  : needsVerification
+                    ? "Logged in, but Steam/FiveM hex verification is required before full access."
+                    : isAllowed
+                      ? "Whitelisted and unlocked."
                   : activeSession.guildMemberFound === false
                     ? "Logged in, but this Discord account is not inside the Sinland guild yet."
                     : "Logged in, but not whitelisted yet."}
@@ -139,6 +169,14 @@ export default async function HomePage() {
                 <div className="status-row">
                   <span>Whitelist role</span>
                   <strong>{isAllowed ? "Granted" : "Missing"}</strong>
+                </div>
+                <div className="status-row">
+                  <span>FiveM hex verification</span>
+                  <strong>{activeSession.steamVerifiedAt ? "Confirmed" : "Required"}</strong>
+                </div>
+                <div className="status-row">
+                  <span>Ban status</span>
+                  <strong>{isBanned ? "Blocked" : "Clear"}</strong>
                 </div>
                 {roleSummary.length ? (
                   <div className="chip-row">
@@ -158,7 +196,7 @@ export default async function HomePage() {
             </Link>
           ) : null}
         </div>
-        <div className="tiers-grid">
+        {!needsVerification && !isBanned ? <div className="tiers-grid">
           {tiers.map((tier) => (
             <article key={tier.slug} className="tier-card">
               <span className="tier-badge" style={{ backgroundColor: `${tier.accent}22`, color: tier.accent }}>
@@ -180,7 +218,7 @@ export default async function HomePage() {
               {isAllowed ? <CheckoutButton tierSlug={tier.slug} /> : <Link href="/api/auth/discord/login" className="button secondary">Login To Unlock</Link>}
             </article>
           ))}
-        </div>
+        </div> : null}
       </section>
     </SiteChrome>
   );
