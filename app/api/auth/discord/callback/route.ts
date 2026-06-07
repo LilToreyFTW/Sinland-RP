@@ -34,7 +34,27 @@ export async function GET(request: NextRequest) {
             guildMemberFound: true
           })
         : null;
-    const whitelist = oauthSnapshot || (await fetchWhitelistStatus(discordUser.id));
+    let whitelist = oauthSnapshot;
+
+    try {
+      const websiteSnapshot = await fetchWhitelistStatus(discordUser.id);
+      if (websiteSnapshot.success) {
+        whitelist = {
+          ...oauthSnapshot,
+          ...websiteSnapshot,
+          guildMemberFound: websiteSnapshot.guildMemberFound ?? oauthSnapshot?.guildMemberFound ?? isInGuild
+        };
+      }
+    } catch {}
+
+    if (!whitelist) {
+      whitelist = {
+        success: false,
+        isWhitelisted: false,
+        guildMemberFound: isInGuild
+      };
+    }
+
     const websiteFields = whitelist as Partial<SessionUser>;
     const session: SessionUser = {
       discordId: discordUser.id,
