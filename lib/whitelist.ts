@@ -32,12 +32,13 @@ export type WhitelistSnapshot = {
 function getBotApiCandidates() {
   const botApiUrl = process.env.BOT_API_URL;
   const botApiKey = process.env.BOT_API_KEY;
+  const fallbackBotApiUrl = process.env.BOT_API_FALLBACK_URL || "http://147.189.172.104:3050";
 
   if (!botApiUrl || !botApiKey) {
     throw new Error("BOT_API_URL or BOT_API_KEY is missing.");
   }
 
-  const urls = [botApiUrl];
+  const urls = [botApiUrl, fallbackBotApiUrl];
 
   try {
     const parsed = new URL(botApiUrl);
