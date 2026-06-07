@@ -31,10 +31,33 @@ export type VehicleEntry = {
   previewPath: string | null;
 };
 
+export type QbVehicleEntry = {
+  id: string;
+  model: string;
+  name: string;
+  brand: string;
+  price: number;
+  category: string;
+  type: string;
+  shops: string[];
+  previewPath: string | null;
+};
+
+export type QbVehicleShopEntry = {
+  key: string;
+  label: string;
+  type: string;
+  job: string;
+  categories: string[];
+  showroomVehicles: string[];
+};
+
 export type ServerSnapshot = {
   categories: ResourceCategorySnapshot[];
   featuredSystems: ResourceEntry[];
   vehicles: VehicleEntry[];
+  qbVehicleCatalog: QbVehicleEntry[];
+  qbVehicleShops: QbVehicleShopEntry[];
   totalResources: number;
 };
 
@@ -224,6 +247,71 @@ function getTagValue(source: string, tagName: string) {
   return match?.[1]?.trim() || "";
 }
 
+function parseLuaStringList(block: string) {
+  return Array.from(block.matchAll(/'([^']+)'/g), (match) => match[1]);
+}
+
+function getQbVehicleCatalog() {
+  const qbVehiclesPath = path.join(resourcesRoot, "[qb]", "qb-core", "shared", "vehicles.lua");
+  if (!fs.existsSync(qbVehiclesPath)) {
+    return [] as QbVehicleEntry[];
+  }
+
+  const source = fs.readFileSync(qbVehiclesPath, "utf8");
+  const matches = source.matchAll(
+    /\{\s*model\s*=\s*'([^']+)'\s*,\s*name\s*=\s*'([^']+)'\s*,\s*brand\s*=\s*'([^']+)'\s*,\s*price\s*=\s*(\d+)\s*,\s*category\s*=\s*['"]([^'"]+)['"]\s*,\s*type\s*=\s*'([^']+)'\s*,\s*shop\s*=\s*\{([^}]*)\}/g
+  );
+
+  return Array.from(matches, (match) => {
+    const [, model, name, brand, price, category, type, shopBlock] = match;
+    return {
+      id: model.toLowerCase(),
+      model,
+      name,
+      brand,
+      price: Number(price),
+      category,
+      type,
+      shops: parseLuaStringList(shopBlock),
+      previewPath: previewForVehicle(model, model)
+    } satisfies QbVehicleEntry;
+  }).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function getQbVehicleshopConfig() {
+  const qbVehicleshopConfigPath = path.join(resourcesRoot, "[qb]", "qb-vehicleshop", "config.lua");
+  if (!fs.existsSync(qbVehicleshopConfigPath)) {
+    return [] as QbVehicleShopEntry[];
+  }
+
+  const source = fs.readFileSync(qbVehicleshopConfigPath, "utf8");
+  const shopsBlockMatch = source.match(/Config\.Shops\s*=\s*\{([\s\S]*)\}\s*$/);
+  if (!shopsBlockMatch) {
+    return [] as QbVehicleShopEntry[];
+  }
+
+  const shopMatches = shopsBlockMatch[1].matchAll(
+    /\['([^']+)'\]\s*=\s*\{([\s\S]*?)\n\s*\}(?=,\s*--|\s*,\s*\['|\s*$)/g
+  );
+
+  return Array.from(shopMatches, (match) => {
+    const [, key, body] = match;
+    const label = body.match(/\['ShopLabel'\]\s*=\s*'([^']+)'/)?.[1] || key;
+    const type = body.match(/\['Type'\]\s*=\s*'([^']+)'/)?.[1] || "unknown";
+    const job = body.match(/\['Job'\]\s*=\s*'([^']+)'/)?.[1] || "none";
+    const showroomVehicles = Array.from(body.matchAll(/chosenVehicle\s*=\s*'([^']+)'/g), (item) => item[1]);
+
+    return {
+      key,
+      label,
+      type,
+      job,
+      categories: [],
+      showroomVehicles
+    } satisfies QbVehicleShopEntry;
+  });
+}
+
 function getVehicles() {
   const vehiclesDir = path.join(resourcesRoot, "[sinland-cars-v2]");
   const resourceDirs = safeReadDir(vehiclesDir).filter((entry) => entry.isDirectory());
@@ -277,11 +365,24 @@ export function getServerSnapshot(): ServerSnapshot {
   const categorySnapshots = categories.map(getCategorySnapshot);
   const featuredSystems = getFeaturedSystems();
   const vehicles = getVehicles();
+  const qbVehicleCatalog = getQbVehicleCatalog();
+  const qbVehicleShops = getQbVehicleshopConfig().map((shop) => ({
+    ...shop,
+    categories: Array.from(
+      new Set(
+        qbVehicleCatalog
+          .filter((vehicle) => vehicle.shops.includes(shop.key))
+          .map((vehicle) => vehicle.category)
+      )
+    ).sort((a, b) => a.localeCompare(b))
+  }));
 
   return {
     categories: categorySnapshots,
     featuredSystems,
     vehicles,
+    qbVehicleCatalog,
+    qbVehicleShops,
     totalResources: categorySnapshots.reduce((total, category) => total + category.resourceCount, 0)
   };
 }

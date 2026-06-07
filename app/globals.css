@@ -427,6 +427,12 @@ textarea {
   gap: 18px;
 }
 
+.garage-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
 .vehicle-card {
   overflow: hidden;
   padding: 0;
@@ -500,6 +506,7 @@ textarea {
   .forum-layout,
   .resource-grid,
   .resource-grid.two-up,
+  .garage-stat-grid,
   .tiers-grid,
   .vehicle-grid,
   .thread-list {
