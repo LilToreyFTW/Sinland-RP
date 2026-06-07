@@ -16,7 +16,13 @@ export default async function HomePage() {
         guildMemberFound: liveRoles?.success ? liveRoles.guildMemberFound ?? session.guildMemberFound : session.guildMemberFound
       }
     : null;
-  const needsVerification = Boolean(activeSession?.guildMemberFound && activeSession?.verificationRequired);
+  const needsVerification = Boolean(
+    activeSession?.discordId
+      && activeSession?.guildMemberFound
+      && (typeof activeSession?.verificationRequired === "boolean"
+        ? activeSession.verificationRequired
+        : !activeSession?.steamVerifiedAt)
+  );
   const isBanned = Boolean(activeSession?.banned);
   const isAllowed = Boolean(activeSession?.isWhitelisted);
   const isFullyUnlocked = Boolean(isAllowed && !needsVerification && !isBanned);

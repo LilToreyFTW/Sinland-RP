@@ -56,12 +56,15 @@ export function getSessionCookieName() {
 }
 
 export function getSessionCookieOptions(maxAge = SESSION_MAX_AGE) {
+  const expires = new Date(Date.now() + maxAge * 1000);
   return {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     path: "/",
-    maxAge
+    maxAge,
+    expires,
+    priority: "high" as const
   };
 }
 

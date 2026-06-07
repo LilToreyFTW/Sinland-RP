@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession, setSession } from "@/lib/session";
+import { encodeSession, getSession, getSessionCookieName, getSessionCookieOptions, type SessionUser } from "@/lib/session";
 import { submitSteamVerification } from "@/lib/whitelist";
 
 export async function POST(request: Request) {
@@ -51,10 +51,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: payload.error || "Verification failed." }, { status: response.status });
   }
 
-  await setSession({
+  const updatedSession: SessionUser = {
     ...session,
     ...payload.access
-  });
+  };
 
-  return NextResponse.json({ success: true });
+  const nextResponse = NextResponse.json({ success: true });
+  nextResponse.cookies.set(getSessionCookieName(), encodeSession(updatedSession), getSessionCookieOptions());
+  return nextResponse;
 }
