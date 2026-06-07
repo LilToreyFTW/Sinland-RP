@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { clearSession } from "@/lib/session";
+import { getSessionCookieName, getSessionCookieOptions } from "@/lib/session";
 
 export async function GET(request: NextRequest) {
-  await clearSession();
-  return NextResponse.redirect(new URL("/", request.url));
+  const response = NextResponse.redirect(new URL("/", request.url));
+  response.cookies.set(getSessionCookieName(), "", getSessionCookieOptions(0));
+  return response;
 }

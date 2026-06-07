@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { exchangeDiscordCode, fetchDiscordGuildMember, fetchDiscordGuilds, fetchDiscordUser, getDiscordAvatarUrl } from "@/lib/discord";
-import { setSession } from "@/lib/session";
+import { encodeSession, getSessionCookieName, getSessionCookieOptions, type SessionUser } from "@/lib/session";
 import { fetchWhitelistStatus } from "@/lib/whitelist";
 import { buildSnapshotFromRoles } from "@/lib/sinland-roles";
 
@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
           })
         : null;
     const whitelist = oauthSnapshot || (await fetchWhitelistStatus(discordUser.id));
-
-    await setSession({
+    const websiteFields = whitelist as Partial<SessionUser>;
+    const session: SessionUser = {
       discordId: discordUser.id,
       username: discordUser.username,
       avatar: getDiscordAvatarUrl(discordUser),
@@ -51,12 +51,29 @@ export async function GET(request: NextRequest) {
       hasTs2026Pack: whitelist.hasTs2026Pack,
       roles: whitelist.roles,
       roleLabels: whitelist.roleLabels,
-      guildMemberFound: whitelist.guildMemberFound ?? isInGuild
-    });
+      guildMemberFound: whitelist.guildMemberFound ?? isInGuild,
+      steam: websiteFields.steam,
+      steamIdentifier: websiteFields.steamIdentifier,
+      steamProfileUrl: websiteFields.steamProfileUrl,
+      steamVerifiedAt: websiteFields.steamVerifiedAt,
+      verificationRequired: websiteFields.verificationRequired,
+      banned: websiteFields.banned,
+      ban: websiteFields.ban
+    };
 
-    return NextResponse.redirect(
+    const response = NextResponse.redirect(
       new URL(whitelist.isWhitelisted ? "/?auth=approved" : isInGuild ? "/?auth=denied" : "/?auth=notinguild", request.url)
     );
+    response.cookies.set(getSessionCookieName(), encodeSession(session), getSessionCookieOptions());
+    response.cookies.set("sinland_oauth_state", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0
+    });
+
+    return response;
   } catch {
     return NextResponse.redirect(new URL("/?auth=failed", request.url));
   }

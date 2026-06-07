@@ -32,6 +32,7 @@ export type SessionUser = {
 };
 
 const COOKIE_NAME = "sinland_session";
+const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 
 function getSessionSecret() {
   const secret = process.env.SESSION_SECRET;
@@ -48,6 +49,20 @@ function sign(value: string) {
 export function encodeSession(session: SessionUser) {
   const payload = Buffer.from(JSON.stringify(session), "utf8").toString("base64url");
   return `${payload}.${sign(payload)}`;
+}
+
+export function getSessionCookieName() {
+  return COOKIE_NAME;
+}
+
+export function getSessionCookieOptions(maxAge = SESSION_MAX_AGE) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge
+  };
 }
 
 export function decodeSession(rawValue: string | undefined) {
@@ -78,22 +93,10 @@ export async function getSession() {
 
 export async function setSession(session: SessionUser) {
   const store = await cookies();
-  store.set(COOKIE_NAME, encodeSession(session), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7
-  });
+  store.set(COOKIE_NAME, encodeSession(session), getSessionCookieOptions());
 }
 
 export async function clearSession() {
   const store = await cookies();
-  store.set(COOKIE_NAME, "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0
-  });
+  store.set(COOKIE_NAME, "", getSessionCookieOptions(0));
 }
