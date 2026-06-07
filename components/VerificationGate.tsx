@@ -48,7 +48,7 @@ export function VerificationGate({
   }
 
   return (
-    <section className="verification-panel">
+    <section className="verification-panel" id="verification-gate">
       <div className="section-heading">
         <span className="section-kicker">Must Do Verification</span>
         <h2>Enter your Steam profile or FiveM hex before full access.</h2>

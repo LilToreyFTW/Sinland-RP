@@ -16,9 +16,10 @@ export default async function HomePage() {
         guildMemberFound: liveRoles?.success ? liveRoles.guildMemberFound ?? session.guildMemberFound : session.guildMemberFound
       }
     : null;
-  const isAllowed = Boolean(activeSession?.isWhitelisted);
   const needsVerification = Boolean(activeSession?.guildMemberFound && activeSession?.verificationRequired);
   const isBanned = Boolean(activeSession?.banned);
+  const isAllowed = Boolean(activeSession?.isWhitelisted);
+  const isFullyUnlocked = Boolean(isAllowed && !needsVerification && !isBanned);
   const snapshot = getServerSnapshot();
   const highlightCategories = snapshot.categories.slice(0, 6);
   const roleSummary = [
@@ -154,8 +155,10 @@ export default async function HomePage() {
                   ? "Access blocked by protected ban enforcement."
                   : needsVerification
                     ? "Logged in, but Steam/FiveM hex verification is required before full access."
-                    : isAllowed
+                    : isFullyUnlocked
                       ? "Whitelisted and unlocked."
+                    : needsVerification
+                      ? "Discord verified, but you still must submit your FiveM hex before full access."
                   : activeSession.guildMemberFound === false
                     ? "Logged in, but this Discord account is not inside the Sinland guild yet."
                     : "Logged in, but not whitelisted yet."}
@@ -175,6 +178,10 @@ export default async function HomePage() {
                   <strong>{activeSession.steamVerifiedAt ? "Confirmed" : "Required"}</strong>
                 </div>
                 <div className="status-row">
+                  <span>Website access</span>
+                  <strong>{isFullyUnlocked ? "Unlocked" : needsVerification ? "Pending verification" : isBanned ? "Blocked" : "Limited"}</strong>
+                </div>
+                <div className="status-row">
                   <span>Ban status</span>
                   <strong>{isBanned ? "Blocked" : "Clear"}</strong>
                 </div>
@@ -190,7 +197,11 @@ export default async function HomePage() {
               </div>
             ) : null}
           </div>
-          {!isAllowed ? (
+          {needsVerification ? (
+            <a href="#verification-gate" className="button">
+              Complete FiveM Hex Verification
+            </a>
+          ) : !isFullyUnlocked ? (
             <Link href="/api/auth/discord/login" className="button secondary">
               Verify with Discord
             </Link>
@@ -215,7 +226,7 @@ export default async function HomePage() {
                 ))}
               </ul>
               {tier.restrictions ? <div className="restriction">{tier.restrictions}</div> : null}
-              {isAllowed ? <CheckoutButton tierSlug={tier.slug} /> : <Link href="/api/auth/discord/login" className="button secondary">Login To Unlock</Link>}
+              {isFullyUnlocked ? <CheckoutButton tierSlug={tier.slug} /> : needsVerification ? <a href="#verification-gate" className="button secondary">Finish FiveM Hex Verification</a> : <Link href="/api/auth/discord/login" className="button secondary">Login To Unlock</Link>}
             </article>
           ))}
         </div> : null}
