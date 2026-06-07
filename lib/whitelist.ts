@@ -29,7 +29,7 @@ export type WhitelistSnapshot = {
   error?: string;
 };
 
-export async function fetchWhitelistStatus(discordId: string) {
+function getBotApiCandidates() {
   const botApiUrl = process.env.BOT_API_URL;
   const botApiKey = process.env.BOT_API_KEY;
 
@@ -37,11 +37,63 @@ export async function fetchWhitelistStatus(discordId: string) {
     throw new Error("BOT_API_URL or BOT_API_KEY is missing.");
   }
 
-  const response = await fetch(`${botApiUrl}/api/website/member/${discordId}`, {
-    headers: {
-      "x-sinland-api-key": botApiKey
-    },
-    cache: "no-store"
+  const urls = [botApiUrl];
+
+  try {
+    const parsed = new URL(botApiUrl);
+    const isIpv4Host = /^\d{1,3}(?:\.\d{1,3}){3}$/.test(parsed.hostname);
+
+    if (parsed.protocol === "https:" && isIpv4Host) {
+      const httpUrl = new URL(botApiUrl);
+      httpUrl.protocol = "http:";
+      urls.push(httpUrl.toString().replace(/\/$/, ""));
+    }
+  } catch {}
+
+  return {
+    botApiKey,
+    urls: Array.from(new Set(urls.map((url) => url.replace(/\/$/, ""))))
+  };
+}
+
+async function fetchWithBotFallback(
+  path: string,
+  init: RequestInit & { headers?: Record<string, string> }
+) {
+  const { botApiKey, urls } = getBotApiCandidates();
+  let lastError: unknown = null;
+  let lastResponse: Response | null = null;
+
+  for (const baseUrl of urls) {
+    try {
+      const response = await fetch(`${baseUrl}${path}`, {
+        ...init,
+        headers: {
+          ...(init.headers || {}),
+          "x-sinland-api-key": botApiKey
+        },
+        cache: "no-store"
+      });
+
+      lastResponse = response;
+      if (response.ok || response.status !== 503) {
+        return response;
+      }
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  if (lastResponse) {
+    return lastResponse;
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Could not reach the Discord verification service.");
+}
+
+export async function fetchWhitelistStatus(discordId: string) {
+  const response = await fetchWithBotFallback(`/api/website/member/${discordId}`, {
+    headers: {}
   });
 
   if (!response.ok) {
@@ -66,21 +118,12 @@ export async function fetchWhitelistStatus(discordId: string) {
 }
 
 export async function submitSteamVerification(discordId: string, steamInput: string) {
-  const botApiUrl = process.env.BOT_API_URL;
-  const botApiKey = process.env.BOT_API_KEY;
-
-  if (!botApiUrl || !botApiKey) {
-    throw new Error("BOT_API_URL or BOT_API_KEY is missing.");
-  }
-
-  const response = await fetch(`${botApiUrl}/api/website/verification/${discordId}`, {
+  const response = await fetchWithBotFallback(`/api/website/verification/${discordId}`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      "x-sinland-api-key": botApiKey
+      "Content-Type": "application/json"
     },
-    body: JSON.stringify({ steamInput }),
-    cache: "no-store"
+    body: JSON.stringify({ steamInput })
   });
 
   return response;
