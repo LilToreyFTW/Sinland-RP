@@ -51,6 +51,16 @@ export function SiteChrome({
         </div>
       </nav>
 
+      {session?.roleLabels?.length ? (
+        <section className="role-ribbon" aria-label="Discord roles">
+          {session.roleLabels.slice(0, 8).map((label) => (
+            <span className="pill" key={label}>
+              {label}
+            </span>
+          ))}
+        </section>
+      ) : null}
+
       {children}
     </main>
   );

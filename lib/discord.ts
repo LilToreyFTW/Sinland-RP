@@ -4,6 +4,11 @@ export type DiscordUser = {
   avatar: string | null;
 };
 
+export type DiscordGuild = {
+  id: string;
+  name: string;
+};
+
 export function getDiscordAvatarUrl(user: DiscordUser) {
   if (!user.avatar) {
     return null;
@@ -49,4 +54,19 @@ export async function fetchDiscordUser(accessToken: string) {
   }
 
   return response.json() as Promise<DiscordUser>;
+}
+
+export async function fetchDiscordGuilds(accessToken: string) {
+  const response = await fetch("https://discord.com/api/users/@me/guilds", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    },
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error("Discord guild fetch failed.");
+  }
+
+  return response.json() as Promise<DiscordGuild[]>;
 }

@@ -6,6 +6,17 @@ export type SessionUser = {
   username: string;
   avatar: string | null;
   isWhitelisted: boolean;
+  isOwner?: boolean;
+  hasElite?: boolean;
+  isStaff?: boolean;
+  isStakeholder?: boolean;
+  hasPlayerbanks?: boolean;
+  hasBaddie?: boolean;
+  hasDrifter?: boolean;
+  hasTs2026Pack?: boolean;
+  roles?: string[];
+  roleLabels?: string[];
+  guildMemberFound?: boolean;
 };
 
 const COOKIE_NAME = "sinland_session";

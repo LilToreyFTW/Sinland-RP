@@ -1,8 +1,20 @@
 export type WhitelistSnapshot = {
   success: boolean;
   isWhitelisted: boolean;
+  discordId?: string;
+  guildId?: string;
   isOwner?: boolean;
+  hasElite?: boolean;
+  isStaff?: boolean;
+  isStakeholder?: boolean;
+  hasPlayerbanks?: boolean;
+  hasBaddie?: boolean;
+  hasDrifter?: boolean;
+  hasTs2026Pack?: boolean;
   roles?: string[];
+  roleLabels?: string[];
+  guildMemberFound?: boolean;
+  error?: string;
 };
 
 export async function fetchWhitelistStatus(discordId: string) {
@@ -21,7 +33,21 @@ export async function fetchWhitelistStatus(discordId: string) {
   });
 
   if (!response.ok) {
-    return { success: false, isWhitelisted: false } satisfies WhitelistSnapshot;
+    let error = "Could not verify Discord roles.";
+
+    try {
+      const body = (await response.json()) as { error?: string };
+      if (body?.error) {
+        error = body.error;
+      }
+    } catch {}
+
+    return {
+      success: false,
+      isWhitelisted: false,
+      guildMemberFound: response.status !== 404,
+      error
+    } satisfies WhitelistSnapshot;
   }
 
   return response.json() as Promise<WhitelistSnapshot>;

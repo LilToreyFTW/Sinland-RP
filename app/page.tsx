@@ -7,12 +7,30 @@ import { tiers } from "@/lib/tiers";
 
 export default async function HomePage() {
   const session = await getSession();
-  const isAllowed = Boolean(session?.isWhitelisted);
+  const liveRoles = session?.discordId ? await getLiveSnapshot(session.discordId) : null;
+  const activeSession = session
+    ? {
+        ...session,
+        ...liveRoles,
+        guildMemberFound: liveRoles?.guildMemberFound ?? session.guildMemberFound
+      }
+    : null;
+  const isAllowed = Boolean(activeSession?.isWhitelisted);
   const snapshot = getServerSnapshot();
   const highlightCategories = snapshot.categories.slice(0, 6);
+  const roleSummary = [
+    activeSession?.isOwner ? "Owner" : null,
+    activeSession?.isStaff ? "Staff" : null,
+    activeSession?.isStakeholder ? "Stakeholder" : null,
+    activeSession?.hasElite ? "Elite" : null,
+    activeSession?.hasPlayerbanks ? "Playerbanks" : null,
+    activeSession?.hasBaddie ? "Baddie" : null,
+    activeSession?.hasDrifter ? "Drifter" : null,
+    activeSession?.hasTs2026Pack ? "T's 2026 Pack" : null
+  ].filter(Boolean) as string[];
 
   return (
-    <SiteChrome session={session}>
+    <SiteChrome session={activeSession}>
       <section className="hero-panel">
         <div className="hero-copy">
           <span className="section-kicker">Live Server Overview</span>
@@ -103,7 +121,36 @@ export default async function HomePage() {
         <div className="gate-card">
           <div>
             <h3>Discord access status</h3>
-            <p>{session ? (isAllowed ? "Whitelisted and unlocked." : "Logged in, but not whitelisted yet.") : "Not logged in yet."}</p>
+            <p>
+              {!activeSession
+                ? "Not logged in yet."
+                : isAllowed
+                  ? "Whitelisted and unlocked."
+                  : activeSession.guildMemberFound === false
+                    ? "Logged in, but this Discord account is not inside the Sinland guild yet."
+                    : "Logged in, but not whitelisted yet."}
+            </p>
+            {activeSession ? (
+              <div className="status-stack">
+                <div className="status-row">
+                  <span>Guild membership</span>
+                  <strong>{activeSession.guildMemberFound === false ? "Not found" : "Found"}</strong>
+                </div>
+                <div className="status-row">
+                  <span>Whitelist role</span>
+                  <strong>{isAllowed ? "Granted" : "Missing"}</strong>
+                </div>
+                {roleSummary.length ? (
+                  <div className="chip-row">
+                    {roleSummary.map((item) => (
+                      <span className="tiny-chip" key={item}>
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           {!isAllowed ? (
             <Link href="/api/auth/discord/login" className="button secondary">
@@ -137,4 +184,12 @@ export default async function HomePage() {
       </section>
     </SiteChrome>
   );
+}
+
+async function getLiveSnapshot(discordId: string) {
+  try {
+    return await import("@/lib/whitelist").then(({ fetchWhitelistStatus }) => fetchWhitelistStatus(discordId));
+  } catch {
+    return null;
+  }
 }
