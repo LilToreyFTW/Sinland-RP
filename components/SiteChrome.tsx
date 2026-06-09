@@ -12,7 +12,7 @@ export function SiteChrome({
   session,
   children
 }: Readonly<{ session: SessionUser | null; children: React.ReactNode }>) {
-  const discordInvite = process.env.NEXT_PUBLIC_DISCORD_INVITE || "https://discord.gg/2uRphk42HU";
+  const discordInvite = process.env.NEXT_PUBLIC_DISCORD_INVITE || "https://discord.gg/MNX3UxE5EB";
 
   return (
     <main className="site-shell">

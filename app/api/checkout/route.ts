@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  const discordInvite = process.env.NEXT_PUBLIC_DISCORD_INVITE || "https://discord.gg/2uRphk42HU";
+  const discordInvite = process.env.NEXT_PUBLIC_DISCORD_INVITE || "https://discord.gg/MNX3UxE5EB";
 
   if (!stripeKey || !siteUrl) {
     return NextResponse.json({
